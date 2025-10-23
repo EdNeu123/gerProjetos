@@ -1,0 +1,45 @@
+name: gerProjetos
+
+on: [push]
+
+jobs:
+  horusec-scan:
+    name: gerProjetos Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 1. Checkout do Repositório
+        uses: actions/checkout@v4
+
+      - name: 2. Instalar Horusec (CLI)
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/ZupIT/horusec/main/deployments/scripts/install.sh | bash -s /usr/local/bin
+          echo "Horusec instalado!"
+
+      - name: 3. Rodar Scan Rápido (Log)
+        run: |
+          echo "Rodando scan (saída de texto, sem docker)..."
+          horusec start -p . \
+            --ignore="**/node_modules/**" \
+            --disable-docker="true" \
+            -o="text"
+        continue-on-error: true 
+
+      - name: 4. (Extra) Rodar Scan para GitHub Security
+        if: always() # Rodar sempre
+        run: |
+          echo "Rodando scan avançado com saída SARIF..."
+          # Adicionamos --ignore aqui também
+          horusec start -p . \
+            --ignore="**/node_modules/**" \
+            --disable-docker="true" \
+            -o="sarif" \
+            -O="./horusec-results.sarif"
+        continue-on-error: true # Continua para garantir o upload
+
+      - name: 5. (Extra) Upload do Relatório SARIF
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: horusec-results.sarif
+          category: gerProjetos-sast
