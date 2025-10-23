@@ -1,4 +1,4 @@
-name: SecurityPipeline
+name: SecurityPipeline (Versão Final)
 
 on: [push]
 
@@ -19,12 +19,11 @@ jobs:
 
       - name: 2. Instalar Horusec
         run: |
-          curl -fsSL https://raw.githubusercontent.com/ZupIT/horusec/main/deployments/scripts/install.sh | bash -s /usr/local/bin
-          echo "Horusec instalado com sucesso!"
+          curl -fsSL https://raw.githubusercontent.com/ZupIT/horusec/main/deployments/scripts/install.sh | bash -s latest /usr/local/bin
+          horusec version
 
       - name: 3. Rodar Scan (Gerando SARIF)
         run: |
-          echo "Rodando scan..."
           horusec start -p . \
             -e="true" \
             --disable-docker="true" \
@@ -33,11 +32,9 @@ jobs:
             -O="./horusec-results.sarif" || true
 
           if [ ! -f "./horusec-results.sarif" ]; then
-            echo "Nenhum resultado SARIF gerado. Criando arquivo vazio..."
             echo '{"version":"2.1.0","runs":[]}' > horusec-results.sarif
           fi
 
-          echo "Conteúdo do diretório atual:"
           ls -lah
 
       - name: 4. Upload do Relatório SARIF
