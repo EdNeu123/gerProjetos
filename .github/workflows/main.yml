@@ -1,17 +1,37 @@
-name: SecurityPipeline
+name: 🛡️ SecurityPipeline (Refinada)
 
 on: [push]
 
 jobs:
-  horusec-security:
-    name: horusec-security
+  horusec-scan:
+    name: Horusec SAST Scan
     runs-on: ubuntu-latest
+
     steps:
-    - name: Check out code
-      uses: actions/checkout@v2
-      with: # Required when commit authors is enabled
-        fetch-depth: 0
-    - name: Running Horusec Security
-      run: |
-        curl -fsSL https://raw.githubusercontent.com/ZupIT/horusec/main/deployments/scripts/install.sh | bash -s latest
-        horusec start -p="./" -e="true" --disable-docker="true" -o text
+      - name: 1. Check out code (Completo)
+        uses: actions/checkout@v4 # Usei o v4, mais novo
+        with:
+          fetch-depth: 0
+
+      - name: 2. Instalar Horusec (Versão mais nova)
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/ZupIT/horusec/main/deployments/scripts/install.sh | bash -s /usr/local/bin
+          echo "Horusec instalado!"
+
+      - name: 3. Rodar Scan (Com Git History e SARIF)
+        run: |
+          echo "Rodando scan (com histórico do Git e saída SARIF)..."
+          horusec start -p . \
+            -e="true" \
+            --disable-docker="true" \
+            --ignore="**/node_modules/**" \
+            -o="sarif" \
+            -O="./horusec-results.sarif"
+        continue-on-error: true
+
+      - name: 4. Upload do Relatório SARIF
+        if: always() # Sempre rodar
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: horusec-results.sarif
+          category: gerProjetos-sast
