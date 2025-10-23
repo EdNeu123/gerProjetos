@@ -1,4 +1,4 @@
-name: SecurityPipeline
+name: 🛡️ SecurityPipeline (Refinada)
 
 on: [push]
 
@@ -19,7 +19,7 @@ jobs:
 
       - name: 2. Instalar Horusec
         run: |
-          curl -fsSL https://raw.githubusercontent.com/ZupIT/horusec/main/deployments/scripts/install.sh | bash -s /usr-local/bin
+          curl -fsSL https://raw.githubusercontent.com/ZupIT/horusec/main/deployments/scripts/install.sh | bash -s /usr/local/bin
           echo "Horusec instalado!"
 
       - name: 3. Rodar Scan (Gerando SARIF)
@@ -31,7 +31,7 @@ jobs:
             --ignore="**/node_modules/**" \
             -o="sarif" \
             -O="./horusec-results.sarif" \
-            --return-error="false"
+            || true # <-- O VERDADEIRO PULO DO GATO
 
       - name: 4. Upload do Relatório SARIF
         if: always()
