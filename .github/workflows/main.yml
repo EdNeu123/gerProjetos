@@ -1,4 +1,4 @@
-name: 🛡️ SecurityPipeline (Refinada)
+name: 🛡️ SecurityPipeline (Versão Final)
 
 on: [push]
 
@@ -7,6 +7,7 @@ jobs:
     name: Horusec SAST Scan
     runs-on: ubuntu-latest
 
+    # Permissão para o Action escrever na aba "Security"
     permissions:
       security-events: write
       contents: read
@@ -15,7 +16,7 @@ jobs:
       - name: 1. Check out code (Completo)
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 0 # Para o -e="true" funcionar
 
       - name: 2. Instalar Horusec
         run: |
@@ -30,10 +31,12 @@ jobs:
             --disable-docker="true" \
             --ignore="**/node_modules/**" \
             -o="sarif" \
-            -O="./horusec-results.sarif" \
-            || true # <-- O VERDADEIRO PULO DO GATO
+            -O="./horusec-results.sarif"
+        # O Pulo do Gato: Continua mesmo se achar falhas...
+        continue-on-error: true
 
       - name: 4. Upload do Relatório SARIF
+        # ...para que o upload possa acontecer.
         if: always()
         uses: github/codeql-action/upload-sarif@v3
         with:
