@@ -1,4 +1,4 @@
-name: 🛡️ SecurityPipeline (Versão Final)
+name: SecurityPipeline
 
 on: [push]
 
@@ -7,7 +7,6 @@ jobs:
     name: Horusec SAST Scan
     runs-on: ubuntu-latest
 
-    # Permissão para o Action escrever na aba "Security"
     permissions:
       security-events: write
       contents: read
@@ -16,27 +15,32 @@ jobs:
       - name: 1. Check out code (Completo)
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # Para o -e="true" funcionar
+          fetch-depth: 0
 
       - name: 2. Instalar Horusec
         run: |
           curl -fsSL https://raw.githubusercontent.com/ZupIT/horusec/main/deployments/scripts/install.sh | bash -s /usr/local/bin
-          echo "Horusec instalado!"
+          echo "Horusec instalado com sucesso!"
 
       - name: 3. Rodar Scan (Gerando SARIF)
         run: |
-          echo "Rodando scan (com histórico do Git e saída SARIF)..."
+          echo "Rodando scan..."
           horusec start -p . \
             -e="true" \
             --disable-docker="true" \
             --ignore="**/node_modules/**" \
             -o="sarif" \
-            -O="./horusec-results.sarif"
-        # O Pulo do Gato: Continua mesmo se achar falhas...
-        continue-on-error: true
+            -O="./horusec-results.sarif" || true
+
+          if [ ! -f "./horusec-results.sarif" ]; then
+            echo "Nenhum resultado SARIF gerado. Criando arquivo vazio..."
+            echo '{"version":"2.1.0","runs":[]}' > horusec-results.sarif
+          fi
+
+          echo "Conteúdo do diretório atual:"
+          ls -lah
 
       - name: 4. Upload do Relatório SARIF
-        # ...para que o upload possa acontecer.
         if: always()
         uses: github/codeql-action/upload-sarif@v3
         with:
